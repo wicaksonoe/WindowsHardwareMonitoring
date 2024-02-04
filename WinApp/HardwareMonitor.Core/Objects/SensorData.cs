@@ -1,8 +1,9 @@
 ﻿namespace HardwareMonitor.Core.Objects;
 
-public class SensorData(string hardwareName, string sensorName, SensorType sensorType, float? value)
+public class SensorData(string hardwareName, HardwareType hardwareType, string sensorName, SensorType sensorType, float? value)
 {
     public string HardwareName { get; } = hardwareName;
+    public HardwareType HardwareType = hardwareType;
     public string SensorName { get; } = sensorName;
     public SensorType SensorType { get; } = sensorType;
     public float? Value { get; } = value;
@@ -14,6 +15,7 @@ public class SensorData(string hardwareName, string sensorName, SensorType senso
         SensorType.SmallData => "MB",
         SensorType.Control => "%",
         SensorType.Load => "%",
+        SensorType.Power => "Watt",
         _ => "",
     };
 }

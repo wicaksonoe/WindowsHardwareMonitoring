@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using HardwareMonitor.Core.Constants;
 using HardwareMonitor.Core.Objects;
 
 namespace HardwareMonitor.Core;
@@ -20,7 +21,7 @@ public class UpdateVisitor : IVisitor
 
 public static class Main
 {
-    public static void Monitor()
+    public static IEnumerable<SensorData> Monitor()
     {
         var computer = new Computer
         {
@@ -38,18 +39,17 @@ public static class Main
         var monitoredSensors = new List<TargetSensor>
         {
             new (HardwareType.Cpu, new Regex(@"^CPU Core #\d\b"), SensorType.Clock),
-            new (HardwareType.Cpu, "CPU Total", SensorType.Load),
-            new (HardwareType.Cpu, "Core Average", SensorType.Temperature),
-            new (HardwareType.Memory, "Memory Available", SensorType.Data),
-            new (HardwareType.Memory, "Memory Used", SensorType.Data),
-            new (HardwareType.GpuNvidia, "GPU Core", SensorType.Clock),
-            new (HardwareType.GpuNvidia, "GPU Core", SensorType.Load),
-            new (HardwareType.GpuNvidia, "GPU Memory", SensorType.Clock),
-            new (HardwareType.GpuNvidia, "GPU Fan", SensorType.Control),
-            new (HardwareType.GpuNvidia, "GPU Board Power", SensorType.Load),
-            new (HardwareType.GpuNvidia, "GPU Hot Spot", SensorType.Temperature),
-            new (HardwareType.GpuNvidia, "GPU Memory Total", SensorType.SmallData),
-            new (HardwareType.GpuNvidia, "GPU Memory Used", SensorType.SmallData),
+            new (HardwareType.Cpu, SensorName.CpuTotal, SensorType.Load),
+            new (HardwareType.Cpu, SensorName.CpuCoreAverage, SensorType.Temperature),
+            new (HardwareType.Memory, SensorName.MemoryAvailable, SensorType.Data),
+            new (HardwareType.Memory, SensorName.MemoryUsed, SensorType.Data),
+            new (HardwareType.GpuNvidia, SensorName.GpuCore, SensorType.Clock),
+            new (HardwareType.GpuNvidia, SensorName.GpuMemory, SensorType.Clock),
+            new (HardwareType.GpuNvidia, SensorName.GpuFan, SensorType.Control),
+            new (HardwareType.GpuNvidia, SensorName.GpuPackage, SensorType.Power),
+            new (HardwareType.GpuNvidia, SensorName.GpuHotSpot, SensorType.Temperature),
+            new (HardwareType.GpuNvidia, SensorName.GpuMemoryTotal, SensorType.SmallData),
+            new (HardwareType.GpuNvidia, SensorName.GpuMemoryUsed, SensorType.SmallData),
         };
 
         var data = new List<SensorData>();
@@ -66,37 +66,45 @@ public static class Main
             float cpuCoreAggregate = 0;
             var cpuCount = 0;
             
+            float totalMemory = 0;
+            
             foreach (var sensor in sensors)
             {
-                if (sensor.Hardware.HardwareType == HardwareType.Cpu && sensor.SensorType == SensorType.Clock)
+                switch (sensor.Hardware.HardwareType)
                 {
-                    cpuCoreAggregate += sensor.Value ?? 0;
-                    cpuCount += 1;
-                    continue;
+                    case HardwareType.Cpu when sensor.SensorType == SensorType.Clock:
+                        cpuCoreAggregate += sensor.Value ?? 0;
+                        cpuCount += 1;
+                        break;
+                    
+                    case HardwareType.Memory:
+                    {
+                        totalMemory += sensor.Value ?? 0;
+
+                        if (sensor.Name == SensorName.MemoryAvailable)
+                        {
+                            data.Add(new SensorData(hardware.Name, hardware.HardwareType, SensorName.MemoryTotal, sensor.SensorType, totalMemory));
+                            break;
+                        }
+
+                        data.Add(new SensorData(hardware.Name, hardware.HardwareType, sensor.Name, sensor.SensorType, sensor.Value));
+                        break;
+                    }
+                    
+                    default:
+                        data.Add(new SensorData(hardware.Name, hardware.HardwareType, sensor.Name, sensor.SensorType, sensor.Value));
+                        break;
                 }
-                
-                data.Add(new SensorData(hardware.Name, sensor.Name, sensor.SensorType, sensor.Value));
             }
 
             if (cpuCount > 0)
             {
-                data.Add(new SensorData(hardware.Name, $"CPU Core Average ({cpuCount} Core)", SensorType.Clock, cpuCoreAggregate / cpuCount));
-            }
-        }
-
-        foreach (var (item, i) in data.Select((val, i) => new Tuple<SensorData, int>(val, i)))
-        {
-            var nextIndex = i + 1;
-            if (nextIndex < data.Count && data[nextIndex].HardwareName != item.HardwareName)
-            {
-                Console.WriteLine("{0}, {1} = {2} {3}\n", item.HardwareName, item.SensorName, item.Value, item.Unit);
-            }
-            else
-            {
-                Console.WriteLine("{0}, {1} = {2} {3}", item.HardwareName, item.SensorName, item.Value, item.Unit);
+                data.Add(new SensorData(hardware.Name, hardware.HardwareType, SensorName.CpuClockAverage, SensorType.Clock, cpuCoreAggregate / cpuCount));
             }
         }
 
         computer.Close();
+
+        return data;
     }
 }
