@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
-using HardwareMonitor.App.Objects;
+using HardwareMonitor.Core.Objects;
 
-namespace HardwareMonitor.App;
+namespace HardwareMonitor.Core;
 
 public class UpdateVisitor : IVisitor
 {
@@ -55,8 +55,6 @@ public static class Main
         var data = new List<SensorData>();
         foreach (var hardware in hardwareList)
         {
-            // Console.WriteLine("Hardware: {0}", hardware.Name);
-
             var sensors = hardware.Sensors
                 .Where(s => monitoredSensors
                     .Where(m => m.HardwareType == s.Hardware.HardwareType)
@@ -70,7 +68,6 @@ public static class Main
             
             foreach (var sensor in sensors)
             {
-                // Console.WriteLine("\tSensor: {0}, sensorType: {1}, value: {2}", sensor.Name, sensor.SensorType, sensor.Value);
                 if (sensor.Hardware.HardwareType == HardwareType.Cpu && sensor.SensorType == SensorType.Clock)
                 {
                     cpuCoreAggregate += sensor.Value ?? 0;
@@ -89,7 +86,6 @@ public static class Main
 
         foreach (var (item, i) in data.Select((val, i) => new Tuple<SensorData, int>(val, i)))
         {
-            // Console.WriteLine("Hardware: {3}, Sensor: {0}, sensorType: {1}, value: {2}", item.SensorName, item.SensorType, item.Value, item.HardwareName);
             var nextIndex = i + 1;
             if (nextIndex < data.Count && data[nextIndex].HardwareName != item.HardwareName)
             {

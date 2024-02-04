@@ -1,4 +1,4 @@
-﻿namespace HardwareMonitor.App.Objects;
+﻿namespace HardwareMonitor.Core.Objects;
 
 public class SensorData(string hardwareName, string sensorName, SensorType sensorType, float? value)
 {

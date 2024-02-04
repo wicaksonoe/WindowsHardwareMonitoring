@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace HardwareMonitor.App.Objects;
+namespace HardwareMonitor.Core.Objects;
 
 public class TargetSensor
 {

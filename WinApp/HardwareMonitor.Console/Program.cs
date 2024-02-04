@@ -1,4 +1,4 @@
-﻿using HardwareMonitor.App;
+﻿using HardwareMonitor.Core;
 
 do
 {
